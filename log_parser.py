@@ -34,7 +34,7 @@ def parse_record(data, pattern):
         rec = parse_data.groups()
         logger.debug('parse %s: %s' % (data, rec))
     else:
-        logger.warn('record %s' % data)
+        logger.warning('record %s' % data)
         return
     return rec
 
@@ -101,8 +101,9 @@ if __name__ == '__main__':
         if args.log else logging.StreamHandler()
     handler.setFormatter(formatter)
     logger=logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     logger.addHandler(handler)
+    logger.info('log parser started')
     
     # read configuration file and parse the configuration
     with open(args.conf) as c:
@@ -151,3 +152,5 @@ if __name__ == '__main__':
                 print '{:<12}{:<40}{:< 8}'.format(date, os, req_get_by_date[os]/req_post_by_date[os])
             else:
                 print '{:<12}{:<40}{:<8}'.format(date, os, ' infinity')
+                
+    logger.info('log parser finished.')
