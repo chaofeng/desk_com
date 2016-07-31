@@ -1,0 +1,14 @@
+---
+# list of agent attributes to OS mapping
+bots:
+  - 'http'
+  - 'feed-id'
+  - 'crawler'
+  - 'spider'
+  - 'bot'
+  - '@'
+  - 'AOL'
+  - 'America Online Browser'
+  - 'rv:'
+  - 'en-GB'
+  - 'www.aghaven.com'
