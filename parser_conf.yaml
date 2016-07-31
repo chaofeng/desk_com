@@ -1,6 +1,10 @@
 ---
+# log level, one of the options of [DEBUG, INFO, WARNING, ERROR, NONE]
+loglevel: ERROR
 # regexpr to match record fields
 pattern: '^.*?\[(.*?):.*?"(\S+).*"(.*?)"$'
+# top N frequently user agents
+largest_N: 3
 # list of agent attributes to OS mapping
 os:
   - 'window'

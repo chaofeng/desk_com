@@ -19,6 +19,11 @@ import logging.handlers
 
 # init records
 largest_N = 3   # number of most common agents want to show
+log_level = {'DEBUG': logging.DEBUG,
+             'INFO': logging.INFO,
+             'WARNING': logging.WARNING,
+             'ERROR': logging.ERROR,
+             'NONE': logging.NOTSET}
 records = []
 
 def parse_record(data, pattern):
@@ -34,7 +39,7 @@ def parse_record(data, pattern):
         rec = parse_data.groups()
         logger.debug('parse %s: %s' % (data, rec))
     else:
-        logger.warning('record %s' % data)
+        logger.warning('record: %s' % data)
         return
     return rec
 
@@ -83,8 +88,9 @@ if __name__ == '__main__':
     
     The configuration file uses yaml format and requires following attributes:
     
+      loglevel: [DEBUG,INFO,WARNING,ERROR]   # log level
       pattern: <string of regexpr>           # match groups to extract fields from logs
-      bots: <array of pattern string>        # strings that identify bot user-agent
+      os: <array of pattern string>          # strings that identify os from user-agent
       
     """)
     parser.add_argument('logs', metavar='filename', type=str, nargs='+', help='list of log file names')
@@ -101,29 +107,30 @@ if __name__ == '__main__':
         if args.log else logging.StreamHandler()
     handler.setFormatter(formatter)
     logger=logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.ERROR)
     logger.addHandler(handler)
-    logger.info('log parser started')
     
     # read configuration file and parse the configuration
     with open(args.conf) as c:
         try:
             conf = yaml.load(c)
         except:
-            logger.error('Unable to parse configuration file %s' % args.conf)
+            logger.error('Unable to parse configuration file: %s' % args.conf)
+    # re-set the loglevel to the configuration setting
+    logger.setLevel(log_level[conf.get('loglevel', 'ERROR')])
+    logger.info('log parser started')
     
     # read through all logs files
     for log in args.logs:
         try:
             with open(log) as logfile:
                 lines = logfile.readlines()
+            # parse logs
+            records.extend([parse_record(line, conf['pattern']) for line in lines])
+            # remove None records that failed in parsing
+            records = filter(None, records)
         except:
             logger.error("Unable to read or parse log file %s" % log)
-        
-        # parse logs
-        records = [parse_record(line, conf['pattern']) for line in lines]
-        # remove None records that failed in parsing
-        records = filter(None, records)
     
     # calculate total request sorted by date. Python dict will not guarantee sequence of key and we want to
     # sort it for easy reading
@@ -133,9 +140,9 @@ if __name__ == '__main__':
         print '{:<12}{:< 8}'.format(date, total_req_by_date[date])
     
     # sort and find the 3 most common agents by date
-    print '\nTop %s common agents by date:\n' %largest_N
+    print '\nTop %s common agents by date:\n' % conf.get('largest_N', 3)
     for date in sorted(total_req_by_date.keys()):
-        most_common_agent_by_date = Counter([rec[2] for rec in records if rec[0] == date]).most_common(largest_N)
+        most_common_agent_by_date = Counter([rec[2] for rec in records if rec[0] == date]).most_common(conf.get('largest_N', 3))
         for (agent, count) in most_common_agent_by_date:
             print '{:<12}{:<84}{:< 8}'.format(date, agent, count)
     
